@@ -1,0 +1,22 @@
+# IntelliJ project files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Compiled class files
+target/
+project/target/
+project/project/
+
+# Logs and other temporary files
+logs/
+*.log
+*.swp
+*.bak
+*.tmp
+*.tmp.*
+*.~lock.*
+
+# BSP directory
+.bsp/
