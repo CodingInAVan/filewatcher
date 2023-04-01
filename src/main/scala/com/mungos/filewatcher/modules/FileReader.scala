@@ -1,4 +1,4 @@
-package com.mungos.filewatcher.io
+package com.mungos.filewatcher.modules
 
 import cats.effect.kernel.Sync
 import cats.effect.{IO, Resource}

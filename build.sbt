@@ -25,6 +25,7 @@ lazy val root = (project in file("."))
       "org.slf4j" % "slf4j-simple" % slf4jVersion,
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
+      "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-fs2" % circeVersion,
       "org.http4s" %% "http4s-ember-client" % http4sVersion
     )

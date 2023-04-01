@@ -5,7 +5,6 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 import cats.implicits.*
 import cats.syntax.all.*
-import com.mungos.filewatcher.io.FileReader
 import com.mungos.filewatcher.utils.effectfulUtils.KeyValueRef
 import com.mungos.filewatcher.{FileConfig, FileWatcherApp}
 import fs2.Stream
