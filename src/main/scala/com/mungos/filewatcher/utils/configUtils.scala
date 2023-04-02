@@ -11,7 +11,7 @@ import io.circe.parser.*
 
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-object ConfigUtils:
+object configUtils:
   def readConfigFile(file: String): IO[String] = {
     Files[IO]
       .readAll(Path(file), 4096, Flags.Read)

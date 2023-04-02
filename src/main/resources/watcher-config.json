@@ -1,0 +1,19 @@
+{
+  "fileConfigs": [
+    {
+      "file": "src/main/resources/file1.txt",
+      "interval": "1s",
+      "destination": {
+        "type": "http",
+        "uri": "https://example.com/api"
+      }
+    },
+    {
+      "file": "src/main/resources/file2.txt",
+      "interval": "2s",
+      "destination": {
+        "type": "console"
+      }
+    }
+  ]
+}

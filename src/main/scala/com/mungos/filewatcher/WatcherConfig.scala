@@ -19,19 +19,17 @@ case class FileConfig (
 )
 
 sealed trait Destination
-object Console extends Destination
 case class HttpDestination(uri: String) extends Destination
 case class KafkaDestination(brokers: String, topic: String) extends Destination
-
-enum DestinationType:
-  case HTTP, KAFKA
+case object ConsoleDestination extends Destination
 
 object Destination:
   given Decoder[Destination] with
     def apply(cursor: HCursor): Decoder.Result[Destination] =
-      cursor.keys.map(_.toVector) match {
-        case Some(Vector("uri")) => cursor.as[HttpDestination]
-        case Some(Vector("brokers", "topic")) => cursor.as[KafkaDestination]
+      cursor.get[String]("type").flatMap {
+        case "http" => cursor.as[HttpDestination]
+        case "kafka" => cursor.as[KafkaDestination]
+        case "console" => Right(ConsoleDestination)
         case _ => Left(DecodingFailure("Invalid Destination JSON", cursor.history))
       }
 

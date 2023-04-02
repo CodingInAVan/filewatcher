@@ -11,6 +11,8 @@ lazy val log4catsVersion            = "2.5.0"
 lazy val circeVersion               = "0.14.0"
 lazy val fs2Version                 = "3.6.1"
 lazy val http4sVersion              = "0.23.18"
+lazy val fs2KafkaVersion            = "2.5.0"
+lazy val kafkaVersion               = "3.4.0"
 
 lazy val root = (project in file("."))
   .settings(
@@ -27,6 +29,7 @@ lazy val root = (project in file("."))
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-fs2" % circeVersion,
-      "org.http4s" %% "http4s-ember-client" % http4sVersion
+      "org.http4s" %% "http4s-ember-client" % http4sVersion,
+      "org.apache.kafka" % "kafka-clients" % kafkaVersion
     )
   )
