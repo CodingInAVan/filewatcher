@@ -5,11 +5,9 @@ import cats.effect.*
 import cats.effect.unsafe.implicits.global
 import cats.implicits.*
 import cats.syntax.all.*
-import com.mungos.filewatcher.io.FileReader
-import com.mungos.filewatcher.modules.{FileProcessor, FileScheduler}
-import com.mungos.filewatcher.utils.effectfulUtils.*
+import com.mungos.filewatcher.modules.{FileProcessor, FileReader, FileScheduler, HttpClientPool, KafkaMessageSenderFactory, KafkaMessageSenderPool}
+import com.mungos.filewatcher.utils.effectfulUtils.{KeyValueRef, *}
 import fs2.Stream
-import fs2.concurrent.SignallingRef
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
@@ -18,20 +16,27 @@ import java.util.concurrent.Executors
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.*
 
-object FileWatcherApp extends IOApp.Simple {
-
+object FileWatcherApp extends IOApp {
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
-  val config: WatcherConfig = WatcherConfig(
-    List(
-      FileConfig(file = "src\\main\\scala\\com\\mungos\\filewatcher\\WatcherConfig.scala", interval = 1.second),
-      FileConfig(file = "src\\main\\scala\\com\\mungos\\filewatcher\\FileWatcherApp.scala", interval = 2.second),
-    ))
+  import com.mungos.filewatcher.utils.configUtils._
+  override def run(args: List[String]): IO[ExitCode] = {
+    val configFilename = args.headOption.getOrElse("src/main/resources/watcher-config.json")
+    val fixedPoolSize = 10
 
-  override def run: IO[Unit] = for
-    raf <- Ref.of[IO, Map[String, Long]](Map.empty)
-    _ <- config.fileConfigs.parTraverse { fileConfig =>
-      FileScheduler.make[IO](FileProcessor.make[IO]()).processFile(fileConfig, KeyValueRef[IO, String, Long](raf))
-    }
-  yield ()
+    val kafkaMessageSenderFactory = KafkaMessageSenderFactory.make[IO]
+    val fileProcessor = FileProcessor.make[IO]()
+
+    for
+      raf <- Ref.of[IO, Map[String, Long]](Map.empty)
+      json <- readConfigFile(configFilename)
+      config <- decodeWatcherConfig(json)
+      kafkaMessageSenderPool <- KafkaMessageSenderPool.make[IO](fixedPoolSize, kafkaMessageSenderFactory)
+      httpPostClientPool <- HttpClientPool.make[IO](fixedPoolSize)
+      _ <- config.fileConfigs.parTraverse { fileConfig => {
+          FileScheduler.make[IO](fileProcessor).processFile(fileConfig, KeyValueRef[IO, String, Long](raf), httpPostClientPool, kafkaMessageSenderPool)
+        }
+      }
+    yield ExitCode.Success
+  }
 }

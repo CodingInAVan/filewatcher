@@ -7,14 +7,14 @@ import fs2.Stream
 import org.typelevel.log4cats.Logger
 
 trait FileScheduler[F[_]]:
-  def processFile(fileConfig: FileConfig, filePositionMap: KeyValueRef[F, String, Long]): F[Unit]
+  def processFile(fileConfig: FileConfig, filePositionMap: KeyValueRef[F, String, Long], httpClientPool: HttpClientPool[F], kafkaMessageSenderPool: KafkaMessageSenderPool[F]): F[Unit]
 
 
 object FileScheduler:
   def make[F[_]: Temporal : Sync : Logger](fileProcessor: FileProcessor[F]): FileScheduler[F] = new FileScheduler[F]:
-    override def processFile(fileConfig: FileConfig, filePositionMap: KeyValueRef[F, String, Long]): F[Unit] = Stream
+    override def processFile(fileConfig: FileConfig, filePositionMap: KeyValueRef[F, String, Long], httpClientPool: HttpClientPool[F], kafkaMessageSenderPool: KafkaMessageSenderPool[F]): F[Unit] = Stream
       .awakeEvery[F](fileConfig.interval)
       .evalMap { currentTime =>
-        fileProcessor.processingInterval(currentTime, fileConfig, filePositionMap)
+        fileProcessor.processingInterval(currentTime, fileConfig, filePositionMap, httpClientPool, kafkaMessageSenderPool)
       }.compile
       .drain
