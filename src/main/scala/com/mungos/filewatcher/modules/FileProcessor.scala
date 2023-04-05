@@ -38,25 +38,27 @@ object FileProcessor {
         newLines <- FileReader.make[F](file).use { fileReader =>
           getNewLinesFromFile(fileReader, pos.getOrElse(0L))
         }
-        _ <- fileConfig.destination match {
-          case HttpDestination(uri) =>
-            for {
-              client <- httpClientPool.get
-              _ <- Logger[F].info(s"Sending new lines from ${fileConfig.file} to ${uri}")
-              _ <- client.post(Uri.unsafeFromString(uri), newLines.mkString(","))
-              _ <- httpClientPool.release(client)
-            } yield ()
+        _ <-
+          if (newLines.nonEmpty)
+            fileConfig.destination match {
+            case HttpDestination(uri) =>
+              for {
+                client <- httpClientPool.get
+                _ <- Logger[F].info(s"Sending new lines from ${fileConfig.file} to ${uri}")
+                _ <- client.post(Uri.unsafeFromString(uri), newLines.mkString("\n"))
+                _ <- httpClientPool.release(client)
+              } yield ()
 
-          case KafkaDestination(brokers, topic) =>
-            for {
-              producer <- kafkaMessageSenderPool.get(brokers)
-              _ <- producer.send(topic, fileConfig.file, newLines.mkString("\n"))
-              _ <- kafkaMessageSenderPool.release(brokers, producer)
-            } yield ()
+            case KafkaDestination(brokers, topic) =>
+              for {
+                producer <- kafkaMessageSenderPool.get(brokers)
+                _ <- producer.send(topic, fileConfig.file, newLines.mkString("\n"))
+                _ <- kafkaMessageSenderPool.release(brokers, producer)
+              } yield ()
 
-          case ConsoleDestination =>
-            Logger[F].info(newLines.mkString("\n"))
-        }
+            case ConsoleDestination =>
+              Logger[F].info(newLines.mkString("\n"))
+          } else Sync[F].unit
         _ <- Logger[F].info(s"[$currentTime] ${newLines.mkString(",")}")
         _ <- filePositionMap.put(fileConfig.file, file.length())
       } yield ()
